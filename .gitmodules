@@ -1,0 +1,3 @@
+[submodule "Macroboard/frontend"]
+	path = Macroboard/frontend
+	url = https://github.com/merkeg/macroboard-frontend.git
