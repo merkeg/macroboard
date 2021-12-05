@@ -18,7 +18,7 @@
         public byte Length => 2;
 
         /// <inheritdoc />
-        public byte[] ToData()
+        public byte[] Data()
         {
             return new[]
             {

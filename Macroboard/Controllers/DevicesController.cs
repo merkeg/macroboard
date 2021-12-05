@@ -3,6 +3,7 @@ using Macroboard.Driver;
 using Macroboard.Extensions;
 using Macroboard.Models;
 using Macroboard.Models.Devices;
+using MacroboardDriver.Device;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -52,17 +53,18 @@ namespace Macroboard.Controllers
         /// <returns></returns>
         [HttpPost()]
         [Produces("application/json")]
-        [ProducesResponseType(typeof(BaseResponse<DeviceInfo>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(BaseResponse<Device>), StatusCodes.Status201Created)]
         public async Task<IActionResult> AddDevice(NewDeviceRequest deviceRequest)
         {
-            DeviceInfo deviceInfo = await this._deviceDriver.ConnectToDevice(deviceRequest.Port);
-            if (deviceInfo == null)
+            Device device = Device.InstantiateDeviceFromPort(deviceRequest.Port, 115200);
+            
+            if (device == null)
             {
-                return BadRequest(this.ConstructErrorResponse("Port used or non existent"));
+                return BadRequest(this.ConstructErrorResponse("Port used or not existing"));
             }
 
-            deviceInfo.Name = deviceRequest.Name;
-            return Created(deviceInfo.Id.ToString(), (DeviceInfo) deviceInfo);
+            device.Add(Capability.Name, deviceRequest.Name);
+            return Created(device.Uid.ToString(), null);
         }
         
     }

@@ -16,7 +16,7 @@ namespace Macroboard.Driver
 
 
         /// <inheritdoc />
-        public byte[] ToData()
+        public byte[] Data()
         {
             return BitConverter.GetBytes(Uid);
         }

@@ -1,6 +1,6 @@
-﻿namespace Macroboard.Driver
+﻿namespace MacroboardDriver.Messaging.Content
 {
-    public interface IMessageBody
+    public interface IMessageContent
     {
         /// <summary>
         /// Get the lenght of the body

@@ -118,7 +118,7 @@ namespace Macroboard.Driver
             byte[] data = message.Header;
             if (message.Body != null)
             {
-                data = data.Concat(message.Body.ToData()).ToArray();
+                data = data.Concat(message.Body.Data()).ToArray();
             }
             port.Write(message.Header, 0, data.Length);
         }
