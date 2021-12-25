@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Macroboard.Driver;
 using Macroboard.Extensions;
 using Macroboard.Models;
 using Macroboard.Models.Devices;
@@ -16,12 +15,7 @@ namespace Macroboard.Controllers
     [Route("api/devices")]
     public class DevicesController: Controller
     {
-        private readonly IDeviceDriver _deviceDriver;
 
-        public DevicesController(IDeviceDriver deviceDriver)
-        {
-            _deviceDriver = deviceDriver;
-        }
         
         /// <summary>
         /// Get all devices the system is connected to
@@ -31,7 +25,7 @@ namespace Macroboard.Controllers
         [ProducesResponseType(typeof(BaseResponse<DeviceInfo[]>), StatusCodes.Status200OK)]
         public IActionResult GetList()
         {
-            return Ok(_deviceDriver.ListDevices());
+            return Ok();
         }
 
         /// <summary>
