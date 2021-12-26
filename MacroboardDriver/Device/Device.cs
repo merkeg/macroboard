@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.IO.Ports;
+using System.Threading;
 using MacroboardDriver.Device.Modules;
 using MacroboardDriver.Messaging;
 using MacroboardDriver.Messaging.Content;
@@ -35,6 +36,13 @@ namespace MacroboardDriver.Device
         /// The serial port
         /// </summary>
         public SerialPort SerialPort { get; set; }
+
+        public delegate void EntityChange(ModuleType type, byte entityId, byte value);
+
+        /// <summary>
+        /// Entity change event
+        /// </summary>
+        public event EntityChange EntityChangeEvent;
 
         public void WriteMessage<T>(Message<T> message) where T : IMessageContent
         {
@@ -77,6 +85,33 @@ namespace MacroboardDriver.Device
             }
 
             return helloResponse;
+        }
+
+        public void StartMessageLoop()
+        {
+            Message<MessageEmptyBody> startMessage = new Message<MessageEmptyBody>();
+            startMessage.Action = Action.START;
+            Message<MessageEmptyBody> startResponse = WriteMessageWithResponse<MessageEmptyBody, MessageEmptyBody>(startMessage);
+            if (startResponse.Action != Action.OK)
+            {
+                throw new InvalidDeviceResponseException("Response after device start should be OK");
+            }
+
+            Thread t = new Thread(MessageLoop);
+            t.Name = "Message loop thread for device " + Uid;
+            
+            t.Start();
+
+        }
+
+        private void MessageLoop()
+        {
+            Console.WriteLine("Message loop thread started for device " + Uid);
+            while (true)
+            {
+                Message<MessageChangeBody> message = ReadMessage<MessageChangeBody>();
+                EntityChangeEvent?.Invoke((ModuleType) message.Body.entityType, message.Body.entityId, message.Body.value);
+            }
         }
         
         public void InitHandshake()

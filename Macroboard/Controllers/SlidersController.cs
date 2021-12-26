@@ -1,6 +1,7 @@
 ﻿using System.IO.Ports;
 using Macroboard.Models;
 using Macroboard.Models.Devices;
+using MacroboardDriver.Device.Modules;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,7 +19,7 @@ namespace Macroboard.Controllers
         /// <returns></returns>
         [HttpGet("{device_id}/sliders")]
         [Produces("application/json")]
-        [ProducesResponseType(typeof(BaseResponse<DeviceSliderItem[]>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(BaseResponse<Slider[]>), StatusCodes.Status200OK)]
         public IActionResult GetList(uint device_id)
         {
             return Ok();
@@ -31,7 +32,7 @@ namespace Macroboard.Controllers
         /// <returns></returns>
         [HttpGet("{device_id}/sliders/{slider_id}")]
         [Produces("application/json")]
-        [ProducesResponseType(typeof(BaseResponse<DeviceSliderItem[]>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(BaseResponse<Slider[]>), StatusCodes.Status200OK)]
         public IActionResult GetSlider(uint device_id, uint slider_id)
         {
             return Ok();

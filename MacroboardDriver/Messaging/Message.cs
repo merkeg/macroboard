@@ -2,6 +2,7 @@
 using System.IO.Ports;
 using System.Linq;
 using MacroboardDriver.Messaging.Content;
+using Serilog;
 
 namespace MacroboardDriver.Messaging
 {
@@ -64,11 +65,18 @@ namespace MacroboardDriver.Messaging
 
                 message.Action = (Action) port.ReadByte();
                 message.Length = (byte) port.ReadByte();
+                
+                // Block while data is not in
+                while (port.BytesToRead < message.Length)
+                {
+                    
+                }
+                
                 byte[] data = new byte[message.Length];
                 port.Read(data, 0, message.Length);
                 message.Body = new T();
                 message.Body.FromData(data);
-                Console.WriteLine("< {0} [Action: {1} | Length: {2}]",
+                Log.Debug("< {0} [Action: {1} | Length: {2}]",
                     BitConverter.ToString(PreambleBytes.Concat(message.Header).Concat(data).ToArray()), message.Action,
                     message.Length);
 
@@ -86,10 +94,8 @@ namespace MacroboardDriver.Messaging
                     data = data.Concat(message.Body.Data()).ToArray();
                 }
             }
-
-            Console.WriteLine("> {0} [Action: {1} | Length: {2}]",
-                BitConverter.ToString(PreambleBytes.Concat(data).ToArray()), message.Action, message.Length);
-
+            
+            Log.Debug("> {0} [Action: {1} | Length: {2}]", BitConverter.ToString(PreambleBytes.Concat(data).ToArray()), message.Action, message.Length);
             port.Write(PreambleBytes, 0, PreambleBytes.Length);
             port.Write(data, 0, data.Length);
         }

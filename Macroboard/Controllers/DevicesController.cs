@@ -1,10 +1,14 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Macroboard.Extensions;
 using Macroboard.Models;
 using Macroboard.Models.Devices;
 using MacroboardDriver.Device;
+using MacroboardDriver.Device.Modules;
+using MacroboardDriver.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 
 namespace Macroboard.Controllers
 {
@@ -57,8 +61,16 @@ namespace Macroboard.Controllers
                 return BadRequest(this.ConstructErrorResponse("Port used or not existing"));
             }
 
+            device.EntityChangeEvent += this.HandleChange;
+            device.StartMessageLoop();
+
             device.Add(Capability.Name, deviceRequest.Name);
             return Created(device.Uid.ToString(), null);
+        }
+
+        private void HandleChange(ModuleType type, byte entityId, byte value)
+        {
+            Log.Information("< Type: {0} ID: {1} Value: {2}", type, entityId, value);
         }
         
     }
