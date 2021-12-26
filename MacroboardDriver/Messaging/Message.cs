@@ -9,12 +9,12 @@ namespace MacroboardDriver.Messaging
     {
         public static readonly ushort Preamble = 47806;
         public static readonly byte[] PreambleBytes = BitConverter.GetBytes(Preamble);
-        
+
         /// <summary>
         /// Intended Action of the message.
         /// </summary>
         public Action Action;
-        
+
         /// <summary>
         /// Length of the body.
         /// </summary>
@@ -39,37 +39,43 @@ namespace MacroboardDriver.Messaging
         /// Data of the message
         /// </summary>
         public T Body;
-        
+
         public static Message<T> ReadMessage<T>(SerialPort port) where T : IMessageContent, new()
         {
+            Message<T> message = new Message<T>();
             while (true)
             {
-              Message<T> message = new Message<T>();
-                          
-              // Preamble check
-              
-              byte[] preambleCheck = new byte[2];
-              port.Read(preambleCheck, 0, 2);
-              int check = BitConverter.ToUInt16(preambleCheck);
-              if (check != Preamble)
-              {
-                  continue;
-              }
-              
-              
-              message.Action = (Action) port.ReadByte();
-              message.Length = (byte) port.ReadByte();
-              byte[] data = new byte[message.Length];
-              port.Read(data, 0, message.Length);
-              message.Body = new T();
-              message.Body.FromData(data);
-              Console.WriteLine("Action: {0} - Length: {1} - Data: {2}", message.Action, message.Length, BitConverter.ToString(data).Replace("-", " "));
-              
-              return message;  
+                // Wait till header is in
+                if (port.BytesToRead < 4)
+                {
+                    continue;
+                }
+
+                // Preamble check
+                byte[] preambleCheck = new byte[2];
+
+                port.Read(preambleCheck, 0, 2);
+                ushort check = BitConverter.ToUInt16(preambleCheck);
+                if (check != Preamble)
+                {
+                    continue;
+                }
+
+
+                message.Action = (Action) port.ReadByte();
+                message.Length = (byte) port.ReadByte();
+                byte[] data = new byte[message.Length];
+                port.Read(data, 0, message.Length);
+                message.Body = new T();
+                message.Body.FromData(data);
+                Console.WriteLine("< {0} [Action: {1} | Length: {2}]",
+                    BitConverter.ToString(PreambleBytes.Concat(message.Header).Concat(data).ToArray()), message.Action,
+                    message.Length);
+
+                return message;
             }
-            
         }
-        
+
         public static void WriteMessage<T>(SerialPort port, Message<T> message) where T : IMessageContent
         {
             byte[] data = message.Header;
@@ -79,8 +85,11 @@ namespace MacroboardDriver.Messaging
                 {
                     data = data.Concat(message.Body.Data()).ToArray();
                 }
-                
             }
+
+            Console.WriteLine("> {0} [Action: {1} | Length: {2}]",
+                BitConverter.ToString(PreambleBytes.Concat(data).ToArray()), message.Action, message.Length);
+
             port.Write(PreambleBytes, 0, PreambleBytes.Length);
             port.Write(data, 0, data.Length);
         }

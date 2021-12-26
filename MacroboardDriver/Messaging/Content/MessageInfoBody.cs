@@ -9,7 +9,7 @@ namespace MacroboardDriver.Messaging.Content
         /// <summary>
         /// Uid of the device
         /// </summary>
-        public int Uid;
+        public uint Uid;
 
         /// <summary>
         /// Sliders of the device
@@ -41,7 +41,7 @@ namespace MacroboardDriver.Messaging.Content
         /// <inheritdoc />
         public void FromData(byte[] data)
         {
-            this.Uid = BitConverter.ToInt32(data);
+            this.Uid = BitConverter.ToUInt32(data);
             this.Sliders = data[4];
             this.Buttons = data[5];
         }

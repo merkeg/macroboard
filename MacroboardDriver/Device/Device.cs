@@ -14,7 +14,7 @@ namespace MacroboardDriver.Device
         /// <summary>
         /// The unique device identifier set by the developer
         /// </summary>
-        public int Uid { get; set; }
+        public uint Uid { get; set; }
         
         /// <summary>
         /// Custom set name for the device
@@ -51,35 +51,44 @@ namespace MacroboardDriver.Device
         {
             return Message<T>.ReadMessage<T>(this.SerialPort);
         }
-        
+
+        public void ResetDevice()
+        {
+            Message<MessageEmptyBody> resetMessage = new Message<MessageEmptyBody>();
+            resetMessage.Action = Action.RESET;
+            
+            Message<MessageEmptyBody> resetResponse = WriteMessageWithResponse<MessageEmptyBody, MessageEmptyBody>(resetMessage);
+            if (resetResponse.Action != Action.OK)
+            {
+                throw new InvalidDeviceResponseException("Response after device reset should be OK");
+            }
+        }
+
+        public Message<MessageInfoBody> HelloDevice()
+        {
+            Message<MessageEmptyBody> helloMessage = new Message<MessageEmptyBody>();
+            helloMessage.Action = Action.HELLO;
+            
+            Message<MessageInfoBody> helloResponse = WriteMessageWithResponse<MessageEmptyBody, MessageInfoBody>(helloMessage);
+            
+            if (helloResponse.Action != Action.INFO)
+            {
+                throw new InvalidDeviceResponseException("Response after HELLO should be INFO, not: " + helloResponse.Action);
+            }
+
+            return helloResponse;
+        }
         
         public void InitHandshake()
         {
-            Message<MessageEmptyBody> dummyMessage = new Message<MessageEmptyBody>();
             
-            // Reset device
-            dummyMessage.Action = Action.RESET;
-            Message<MessageEmptyBody> response = WriteMessageWithResponse<MessageEmptyBody, MessageEmptyBody>(dummyMessage);
-
-            if (response.Action != Action.OK)
-            {
-                throw new InvalidDeviceResponseException("Response after device reset should be NOK");
-            }
+            ResetDevice();
+            Message<MessageInfoBody> infoMessage = HelloDevice();
             
-            // Welcome the device
-            dummyMessage.Action = Action.HELLO;
-            Message<MessageInfoBody> infoResponse = WriteMessageWithResponse<MessageEmptyBody, MessageInfoBody>(dummyMessage);
-
-            if (infoResponse.Action != Action.INFO)
-            {
-                throw new InvalidDeviceResponseException("Response after HELLO should be INFO, not: " + infoResponse.Action);
-            }
+            this.SetCapability(Capability.Sliders, infoMessage.Body.Sliders);
+            this.SetCapability(Capability.Buttons, infoMessage.Body.Buttons);
+            this.Uid = infoMessage.Body.Uid;
             
-            this.SetCapability(Capability.Sliders, infoResponse.Body.Sliders);
-            this.SetCapability(Capability.Buttons, infoResponse.Body.Buttons);
-            this.Uid = infoResponse.Body.Uid;
-
-
         }
         
         public static Device InstantiateDeviceFromPort(string port, int baudRate)
